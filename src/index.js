@@ -326,5 +326,7 @@ class Pixel {
   }
 }
 
-
-export default Pixel;
+ if (typeof module !== 'undefined' && typeof module.default !== 'undefined')
+    module.default = Pixel;
+  else
+    window.Pixel = Pixel;

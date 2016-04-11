@@ -1,6 +1,6 @@
 {
   "name": "to-pixels",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "convert images to pixel art and have fun",
   "main": "lib/index.js",
   "scripts": {
