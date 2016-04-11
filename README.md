@@ -9,9 +9,9 @@ var pixelass = new Pixel('ass');
 > convert images to pixelart and more
 
 * Ever wanted to upscae an image while keeping the pixel density?
-* Ever wanted to make a mosaic effect from an image`
+* Ever wanted to make a mosaic effect from an image?
 * Absolutely sick of square pixels?
-* In need of a generator that delivers, images, canvas, SVG or box-shadow versions
+* In need of a generator that delivers, images, canvas, SVG or box-shadow versions?
 
 > Pixels is here
 
