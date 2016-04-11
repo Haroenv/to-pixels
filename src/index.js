@@ -18,8 +18,8 @@ class Pixel {
     this.createInput();
 
     // initial values
-    this.generateType = props.type || 'canvas';
-    this.downScale = props.scale || 32;
+    this.generateType = (props.type || 'canvas');
+    this.downScale = (props.scale || 32);
     this.pixelSize = (props.pixel || 1);
     this.pixelShape = (props.shape || 'square');
     this.src(props.src);
@@ -38,10 +38,8 @@ class Pixel {
    */
   updateReader() {
     // prevent until loaded
-    if (!this.loaded) {
-      return
-    }
-    ;
+    if (!this.loaded) return;
+
     this.Reader.height = this.height;
     this.Reader.width = this.width;
     this.reader.drawImage(this.Input, 0, 0, this.width, this.height);
@@ -161,12 +159,14 @@ class Pixel {
    */
   getColorArray() {
     let data = [];
+    let colorArray = [];
+
     // stop if no height is given
     // better safe than sorry
     if (this.Reader.height > 0) {
       data = this.reader.getImageData(0, 0, this.width, this.height).data;
     }
-    let colorArray = [];
+
     // simplify the array
     for (let i = 0; i < data.length; i += 4) {
       let r = data[i];
@@ -174,8 +174,9 @@ class Pixel {
       let b = data[i + 2];
       let a = data[i + 3] / 255;
       let rgba = [r, g, b, a].join(',');
+
+      // make transparent pixels obvious for later filtering
       if (a === 0) {
-        // make transparent pixels obvious for later filtering
         colorArray.push('transparent');
       } else {
         colorArray.push(`rgba(${rgba})`);
@@ -192,19 +193,23 @@ class Pixel {
   drawCanvas() {
     let C = document.createElement('canvas');
     let $ = C.getContext('2d');
+    let n = -1;
+
     C.height = this.height * this.pixelSize;
     C.width = this.width * this.pixelSize;
-    let n = -1;
+
     for (let i = 0; i < this.colorArray.length; i++) {
       $.fillStyle = this.colorArray[i];
       let x = i % this.width;
+
       if (x === 0) {
         ++n;
       }
+
       // filter transparent pixels
       if (this.colorArray[i] !== 'transparent') {
-
         let y = n;
+
         if (this.pixelShape === 'circle') {
           $.beginPath();
           $.arc((x + .5) * this.pixelSize, (y + .5) * this.pixelSize, this.pixelSize / 2, 0, 2 * Math.PI);
@@ -223,18 +228,19 @@ class Pixel {
    * @return {Node} returns an SVG with the pixelart version
    */
   drawSVG() {
+    let n = -1;
     let xmlns = 'http://www.w3.org/2000/svg';
     let SVG = document.createElementNS(xmlns, 'svg');
     SVG.setAttributeNS(null, 'viewBox', `0 0 ${[this.width, this.height].join(' ')}`);
     SVG.setAttributeNS(null, 'height', this.height * this.pixelSize);
     SVG.setAttributeNS(null, 'width', this.width * this.pixelSize);
 
-    let n = -1;
     for (let i = 0; i < this.colorArray.length; i++) {
       let x = i % this.width;
       if (x === 0) {
         ++n;
       }
+
       // filter transparent pixels
       if (this.colorArray[i] !== 'transparent') {
         let y = n;
@@ -257,6 +263,7 @@ class Pixel {
         }
       }
     }
+
     return SVG;
   }
 
@@ -266,7 +273,9 @@ class Pixel {
    */
   drawShadow() {
     let shadow = [];
+    let n = 0;
     let S = document.createElement('div');
+
     S.style.margin = `${-1 * this.pixelSize}px ${this.width * this.pixelSize}px ${this.height * this.pixelSize}px ${-1 * this.pixelSize}px`;
     S.style.width = `${this.pixelSize}px`;
     S.style.height = `${this.pixelSize}px`;
@@ -275,7 +284,6 @@ class Pixel {
       S.style.borderRadius = '100%';
     }
 
-    let n = 0;
     for (let i = 0; i < this.colorArray.length; i++) {
       let x = (i % this.width + 1) * this.pixelSize;
 
@@ -288,7 +296,9 @@ class Pixel {
         shadow.push(`${x}px ${y}px 0 ${this.colorArray[i]}`)
       }
     }
+
     S.style.boxShadow = shadow.join(',').replace(/"/g, '');
+
     return S;
   }
 
@@ -301,6 +311,7 @@ class Pixel {
     let I = document.createElement('img');
     let dataURL = C.toDataURL('image/png');
     I.src = dataURL;
+
     return I;
   }
 
@@ -326,7 +337,9 @@ class Pixel {
   }
 }
 
- if (typeof module !== 'undefined' && typeof module.default !== 'undefined')
-    module.default = Pixel;
-  else
-    window.Pixel = Pixel;
+if (typeof module !== 'undefined' && typeof module.default !== 'undefined') {
+  module.default = Pixel;
+} else {
+  window.Pixel = Pixel;
+}
+
