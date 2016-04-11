@@ -17,8 +17,11 @@ var pixelass = new Pixel('ass');
 
 Examples: [on Codepen](http://codepen.io/pixelass/pen/JXpJZP)
 
+## node & bower
+
 ```shell
 npm install to-pixels
+bower install to-pixels
 ```
 
 ## common js
