@@ -8,19 +8,31 @@ var pixelass = new Pixel('ass');
 
 > convert images to pixelart and more
 
-* Ever wanted to upscae an image while keeping the pixel density?
+* Ever wanted to upscale an image while keeping the pixel density?
 * Ever wanted to make a mosaic effect from an image?
 * Absolutely sick of square pixels?
 * In need of a generator that delivers, images, canvas, SVG or box-shadow versions?
 
-> Pixels is here
+> Pixel is here to help
+
+Examples: [on Codepen](http://codepen.io/pixelass/pen/JXpJZP)
 
 ```shell
-npm i to-pixel
+npm install to-pixels
 ```
 
+## common js
+
 ```js
-import Pixel from 'to-pixel'
+import Pixel from 'to-pixels'
+// or
+var Pixel = require('to-pixels');
+```
+
+## browser
+
+```js
+var Pixel = window.Pixel;
 ```
 
 ## simple
