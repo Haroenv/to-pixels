@@ -15,7 +15,9 @@ var pixelass = new Pixel('ass');
 
 > Pixel is here to help
 
-Examples: [on Codepen](http://codepen.io/pixelass/pen/JXpJZP)
+Examples:  
+[1.](http://codepen.io/pixelass/pen/JXpJZP)  
+[2.](http://codepen.io/pixelass/full/mPXrdM)  
 
 ## node & bower
 
