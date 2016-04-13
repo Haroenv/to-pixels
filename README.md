@@ -1,7 +1,7 @@
 # new Pixel('art');
 
 ```js
-var pixelass = new Pixel('ass');
+var pixelass = new Pixel('ass.png');
 ```
 
 ![pixelASS.png](https://raw.githubusercontent.com/pixelass/to-pixels/master/pixelASS.png)
@@ -16,8 +16,9 @@ var pixelass = new Pixel('ass');
 > Pixel is here to help
 
 Examples:  
-[1.](http://codepen.io/pixelass/pen/JXpJZP)  
-[2.](http://codepen.io/pixelass/full/mPXrdM)  
+[1. (v0.0.5)](http://codepen.io/pixelass/pen/JXpJZP)  
+[2. (v0.0.5)](http://codepen.io/pixelass/full/mPXrdM)  
+[3. (v0.1.0)](http://codepen.io/pixelass/full/KzogJj)  
 
 ## node & bower
 
@@ -42,43 +43,58 @@ var Pixel = window.Pixel;
 
 ## simple
 ```js
-  var pixelart = new Pixel({
-    src: 'art.png'
-  },target);
+  new Pixel('art.png',function(instance){
+    var simple     = instance.getType('canvas');
+    var svg        = instance.getType('svg');
+    var img        = instance.getType('img');
+    var boxShadow  = instance.getType('boxShadow');
+    var colorArray = instance.getType('colorArray')(function(colors,row){
+      // e.g. colors = ['transparent', 'hsla(0,0,0,1)', 'hsla(0,0,0,1)', 'transparent']
+      //      row = 32 (pixels/row)
+    });
+  });
 ```
 
 ## options
 ```js
-  var pixelart = new Pixel({
-    src: 'art.png',
-    pixel: 4,
-    scale: 32,
-    // ... (src,type,pixel,scale,shape)
-  },target);
+  new Pixel({
+    src: 'bart.png',
+    pixel: 6,
+    row: 64,
+    shape: 'circle',
+    hue: 20
+    hueRotate: -50,
+    saturate: -.5
+  },function(instance){
+    var output = instance.getType('img');
+    document.getElementById('example_options').appendChild(output);
+  });
 ```
 
 ## methods 
 ```js
-  var pixelart = new Pixel({
-    src: 'art.png'
-  },target);
+  new Pixel('art.png', function(instance){
+    let type = 'canvas'; // canvas, svg, img, boxShadow, colorArray
+    let output = instance.getType(type);
+  });
 
-  pixelart.scale(64);
-  pixelart.pixel(4);
-  pixelart.resize(64,4);
-  pixelart.shape('circle');
-  pixelart.src('ass.png');
-  pixelart.type('svg');
 ```
 
-
-| Method        | description                              |
-| ------------- | ---------------------------------------- |
-| scale         | witdh of input                           |
-| pixel         | size of pixel                            |
-| resize        | see scale & pixel                        |
-| shape         | shape of pixel  (circle, undefined)      |
-| type          | type of output  (canvas, svg,img,shadow) |
-| src           | image-src of input                       |
+supported types:
 
 
+
+Version 0.1.0 only comes with two methods
+
+`getType`: lazy method to generate when needed  
+`setOptions`: set Options after initializing
+
+
+Version 0.1.0 offers color modification
+
+`hue`: only use this hue value  
+`hueRotate`: rotate hue
+`saturate`: saturate from -1 to 1
+
+
+Due to performance concerns the new API does not render anything by itself

@@ -35,12 +35,18 @@
 
 
   new Pixel({
-    src: 'ass.png',
-    pixel: 10,
-    row: 16,
-    shape: 'circle'
+    src: 'bart.png',
+    pixel: 6,
+    row: 64,
+    shape: 'circle',
+    hueRotate: -50,
+    saturate: -.5
   },function(instance){
-    var output = instance.getType('boxShadow');
+    instance.setOptions({
+      pixel: 20,
+      row: 16
+    });
+    var output = instance.getType('img');
     document.getElementById('example_options').appendChild(output);
   });
 

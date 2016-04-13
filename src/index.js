@@ -1,15 +1,30 @@
 import objectAssign from 'object-assign';
+import Color from 'color';
 
+
+/**
+ * @class  Pixel
+ * generate, colorize and scale pixel art
+ *
+ * @property {Object|String} options options used on init
+ * @property {Function} loadCallback a callback bound to an instance
+ */
 class Pixel {
   constructor(options, loadCallback) {
+    // default options
     let defaults = {
       pixel: 1,
       row: 32,
       shape: 'square'
     }
+
+    // create internal options and extend by defaults
     this.options = {};
     objectAssign(this.options, defaults);
 
+    // if the given options are an object merge them
+    // in case of a string it the source will be set
+    // if both fail return an error and stop execution
     if (typeof options === 'object') {
       objectAssign(this.options, options);
     } else if (typeof options === 'string') {
@@ -22,30 +37,46 @@ class Pixel {
         The provided type "${typeof options}"" is not supported
       `);
     }
+    // bind the callback to this instance
+    // and initialize
     this.loadCallback = loadCallback;
-    this.init(this.options);
-  }
-
-  init(options) {
     this.reader = this.createReader();
-    this.setSource(this.reader,this.options.src);
+    this.setSource(this.reader, this.options.src);
   }
 
+  /**
+   * update the reader after the input is loaded
+   * @param  {Event} e load event
+   */
   onLoad(e) {
     this.updateReader(this.reader);
-  }
+    this.loadCallback(this);
+ }
 
+  /**
+   * called on loadCallback
+   * @param  {Function} callback callback function bound to instance
+   */
   loaded(callback) {
     if (typeof callback === 'function') {
-    console.log('2.',this.options.height);
       callback(this);
     }
   }
 
-  setSource(reader,src){
+  /**
+   * [setSource description]
+   * @param {Object} reader = {input,canvas,context}
+   * @param {string} src    CORS ready URL
+   */
+  setSource(reader, src) {
     reader.input.src = src;
   }
 
+  /**
+   * create a reader for the instance
+   * @return {Object} retuns the input, with the canvas and its context in an object
+   *                  {canvas,context, input}
+   */
   createReader() {
     let input = document.createElement('img');
     let canvas = document.createElement('canvas');
@@ -61,18 +92,42 @@ class Pixel {
     };
   }
 
+  /**
+   * update the reader with current options
+   * sets dimensions and draws the input on the context
+   * @param {Object} reader = {input,canvas,context}
+   */
   updateReader(reader) {
     let height = reader.input.height = reader.input.height / reader.input.width * this.options.row;
     let width = reader.input.width = this.options.row;
-    objectAssign(this.options,{height,width});
-    objectAssign(reader.canvas,{height,width});
+    objectAssign(this.options, {
+      height,
+      width
+    });
+    objectAssign(reader.canvas, {
+      height,
+      width
+    });
 
     reader.context.drawImage(reader.input, 0, 0, width, height);
-    this.loadCallback(this);
   }
 
+  /**
+   * set options after init
+   * @param {Object} options new options
+   */
+  setOptions(options) {
+    objectAssign(this.options, options);
+    this.updateReader(this.reader);
+  }
+
+  /**
+   * [getColorArray description]
+   * @param  {CanvasRenderingContext2D} context the readers context
+   * @return {Object}         returns colors as an array of hsla or transparent value
+   */
   getColorArray(context) {
-    let imageData = context.getImageData(0,0,this.options.width,this.options.height);
+    let imageData = context.getImageData(0, 0, this.options.width, this.options.height);
     let colorArray = [];
 
     if (!imageData) {
@@ -86,13 +141,28 @@ class Pixel {
       let g = data[i + 1];
       let b = data[i + 2];
       let a = data[i + 3] / 255;
-      let rgba = `rgba(${[r, g, b, a].join(',')})`;
+      let rgba = `rgba(${[r,g,b,a].join(',')})`;
 
       // make transparent pixels obvious for later filtering
       if (a === 0) {
         colorArray.push('transparent');
       } else {
-        colorArray.push(rgba);
+        let color = new Color(rgba);
+        let hue = this.options.hue;
+        let hueRotate = this.options.hueRotate;
+        let sat = this.options.saturate;
+        // handle color modification
+        if (typeof hue === 'number') {
+          color = color.hue(hue);
+        }
+        if (typeof hueRotate === 'number') {
+          color = color.rotate(hueRotate);
+        }
+        if (typeof sat === 'number') {
+            color = color.saturate(sat);
+        }
+        let hsla = color.hslaString();
+        colorArray.push(hsla);
       }
     }
     if (colorArray.length > this.options.width) {
@@ -103,6 +173,11 @@ class Pixel {
     return colorArray;
   }
 
+  /**
+   * draw the art with box-shadows
+   * @param {Object} reader = {input,canvas,context}
+   * @return {Node} returns a div with the pixelart version as shadows
+   */
   drawShadow(reader) {
     let shadow = [];
     let y = 0;
@@ -147,6 +222,11 @@ class Pixel {
     return div;
   }
 
+  /**
+   * draw the art as SVG
+   * @param {Object} reader = {input,canvas,context}
+   * @return {Node} returns an SVG
+   */
   drawSVG(reader) {
     let colorArray = this.colorArray || this.getColorArray(reader.context);
     let y = -1;
@@ -192,6 +272,7 @@ class Pixel {
 
   /**
    * draw the art on a canvas
+   * @param {Object} reader = {input,canvas,context}
    * @return {Node} returns a canvas with the pixelart version
    */
   drawCanvas(reader) {
@@ -226,10 +307,20 @@ class Pixel {
     return canvas;
   }
 
+  /**
+   * get dataURL from canvas
+   * @param  {Canvas} canvas 
+   * @return {String} base encoded png
+   */
   getDataURL(canvas) {
     return canvas.toDataURL('image/png');
   }
 
+/**
+   * uses drawCanvas 
+   * @param {Object} reader = {input,canvas,context}
+   * @return {Node} image with a base encoded png
+   */
   drawIMG(dataURL) {
     let img = document.createElement('img');
     img.src = dataURL;
@@ -245,6 +336,13 @@ class Pixel {
     target.appendChild(drawing);
   }
 
+  /**
+   * get type on request
+   * @param  {String} type 
+   * @return {Node|Function}  if "colorArray" a function will be called with the arra and row values
+   *                          row = number of pixels per row
+   *                          in all other cases the unrendered element will be returned
+   */
   getType(type) {
     let reader = this.reader;
     if (type === 'canvas') {
@@ -261,10 +359,10 @@ class Pixel {
       let canvas = this.drawCanvas(reader);
       return this.getDataURL(canvas);
     } else if (type === 'colorArray') {
-      return (callback)=>{
+      return (callback) => {
         if (typeof callback === 'function') {
           let colors = this.getColorArray(reader.context);
-          callback(colors,this.options.row);
+          callback(colors, this.options.row);
         }
       };
     } else {
