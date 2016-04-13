@@ -20,7 +20,7 @@ Examples:
 [2. (v0.0.5)](http://codepen.io/pixelass/full/mPXrdM)  
 [3. (v0.2.0)](http://codepen.io/pixelass/full/KzogJj)  
 
-## node & bower
+## npm & bower
 
 ```shell
 npm install to-pixels
@@ -42,60 +42,71 @@ var Pixel = window.Pixel;
 ```
 
 ## simple
+
 ```js
-  new Pixel('art.png',function(instance){
-    var simple     = instance.getType('canvas');
-    var svg        = instance.getType('svg');
-    var img        = instance.getType('img');
-    var boxShadow  = instance.getType('boxShadow');
-    var colorArray = instance.getType('colorArray')(function(colors,row){
-      // e.g. colors = ['transparent', 'hsla(0,0,0,1)', 'hsla(0,0,0,1)', 'transparent']
-      //      row = 32 (pixels/row)
-    });
-  });
+var target = document.getElementById('example');
+new Pixel('ass.png',function(set,get){
+  var simple = get('canvas');
+  target.appendChild(simple);
+});
 ```
 
 ## options
+
 ```js
-  new Pixel({
-    src: 'bart.png',
-    pixel: 6,
+var target = document.getElementById('example');
+new Pixel({
+  src: 'bart.png',
+  pixel: 20,
+  row: 32,
+  // hue: 50,
+  // invert: true,
+  hueRotate: 30,
+  saturate: -.5
+},function(set,get){
+  set({
+    pixel: 5,
     row: 64,
-    shape: 'circle',
-    hue: 20
-    hueRotate: -50,
-    saturate: -.5
-  },function(instance){
-    var output = instance.getType('img');
-    document.getElementById('example_options').appendChild(output);
+    shape: 'circle'
   });
+  var output = get('img');
+  target.appendChild(output);
+});
 ```
 
-## methods 
-```js
-  new Pixel('art.png', function(instance){
-    let type = 'canvas'; // canvas, svg, img, boxShadow, colorArray
-    let output = instance.getType(type);
-  });
+## callback 
 
+```js
+new Pixel('art.png', function(set,get){
+  // set after init 
+  // src cannot be changed
+  set({pixel:10});
+  // get the requested type
+  let output = get('svg');
+});
 ```
 
 supported types:
+* canvas
+* svg
+* img
+* boxShadow
+* colorArray
 
 
 
-Version 0.2.x comes with two methods
+Version 0.2.x comes with two callback methods
 
-`get`: lazy method to generate when needed  
-`set`: set Options after initializing
+* `get`: lazy method to generate when needed  
+* `set`: set Options after initializing
 
 
 Version 0.2.x offers color modification
 
-`hue`: only use this hue value  
-`hueRotate`: rotate hue
-`saturate`: saturate from -1 to 1
-`invert`: inverts the colors
+* `hue`: only use this hue value  
+* `hueRotate`: rotate hue  
+* `saturate`: saturate from -1 to 1  
+* `invert`: inverts the colors  
 
 
 Due to performance concerns the new API does not render anything by itself
