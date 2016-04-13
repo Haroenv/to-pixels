@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pixel test</title>
+  <script src="../dist/to-pixels.js"></script>
+</head>
+<body>
+
+
+  <div id="example_simple"></div>
+  <div id="example_svg"></div>
+  <div id="example_png"></div>
+  <div id="example_shadow"></div>
+  <div id="example_options"></div>
+
+<script>
+  var Pixel = window.Pixel;
+
+  new Pixel(3);
+  
+  new Pixel('ass.png',function(instance){
+    var simple = instance.getType('canvas');
+    var svg = instance.getType('svg');
+    var img = instance.getType('img');
+    var boxShadow = instance.getType('boxShadow');
+    var colorArray = instance.getType('colorArray');
+    colorArray(function(colors,row){
+      console.log(colors,row);
+    });
+    document.getElementById('example_simple').appendChild(simple);
+    document.getElementById('example_svg').appendChild(svg);
+    document.getElementById('example_png').appendChild(img);
+    document.getElementById('example_shadow').appendChild(boxShadow);
+  });
+
+
+  new Pixel({
+    src: 'ass.png',
+    pixel: 10,
+    row: 16,
+    shape: 'circle'
+  },function(instance){
+    var output = instance.getType('boxShadow');
+    document.getElementById('example_options').appendChild(output);
+  });
+
+</script>
+
+</body>
+</html>

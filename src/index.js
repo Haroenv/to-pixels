@@ -1,345 +1,280 @@
-/**
- * @class  Pixel
- * @property {Object} props options:
- *                          {
- *                            src: 'CORS ready url',
- *                            pixel: size of pixel,
- *                            scale: downscale original to width,
- *                            shape: circle or undefined (square),
- *                            type: render as SVG, canvas, png, or box-shadow
- *                          }
- * @property {Node} target render target
- */
+import objectAssign from 'object-assign';
+
 class Pixel {
-  constructor(props, target) {
-    this.props = props;
-    this.target = target;
-    this.createReader();
-    this.createInput();
+  constructor(options, loadCallback) {
+    let defaults = {
+      pixel: 1,
+      row: 32,
+      shape: 'square'
+    }
+    this.options = {};
+    objectAssign(this.options, defaults);
 
-    // initial values
-    this.generateType = (props.type || 'canvas');
-    this.downScale = (props.scale || 32);
-    this.pixelSize = (props.pixel || 1);
-    this.pixelShape = (props.shape || 'square');
-    this.src(props.src);
+    if (typeof options === 'object') {
+      objectAssign(this.options, options);
+    } else if (typeof options === 'string') {
+      objectAssign(this.options, {
+        src: options
+      });
+    } else {
+      return console.error(`
+        Error: "options" should be an "object" or a "string"
+        The provided type "${typeof options}"" is not supported
+      `);
+    }
+    this.loadCallback = loadCallback;
+    this.init(this.options);
   }
 
-  /**
-   * create a reader canvas
-   */
-  createReader() {
-    this.Reader = document.createElement('canvas');
-    this.reader = this.Reader.getContext('2d');
+  init(options) {
+    this.reader = this.createReader();
+    this.setSource(this.reader,this.options.src);
   }
 
-  /**
-   * update the reader and fire rerendering methods
-   */
-  updateReader() {
-    // prevent until loaded
-    if (!this.loaded) return;
-
-    this.Reader.height = this.height;
-    this.Reader.width = this.width;
-    this.reader.drawImage(this.Input, 0, 0, this.width, this.height);
-
-    // rerender
-    this.getColorArray();
-    this.draw();
-  }
-
-  /**
-   * render the pixelart
-   */
-  draw() {
-    let drawing = this.generateByType(this.generateType);
-    this.target.innerHTML = '';
-    this.target.appendChild(drawing);
-  }
-
-  /**
-   * load event of the input image
-   * @param  {Event} e load event
-   */
   onLoad(e) {
-    this.loaded = true;
-    this.setSize();
-    this.updateReader();
+    this.updateReader(this.reader);
   }
 
-  /**
-   * create input element (img)
-   * and add loader
-   */
-  createInput() {
-    this.Input = document.createElement('img');
-    this.Input.crossOrigin = 'Anonymous';
-    this.Input.onload = this.onLoad.bind(this);
+  loaded(callback) {
+    if (typeof callback === 'function') {
+    console.log('2.',this.options.height);
+      callback(this);
+    }
   }
 
-  /**
-   * public method for src changes
-   * @param  {String} src CORS ready URL
-   */
-  src(src) {
-    this.loaded = false;
-    // changing the source will rerender automatically
-    this.Input.src = src;
+  setSource(reader,src){
+    reader.input.src = src;
   }
 
-  /**
-   * public method for pixel size changes
-   * @param  {Integer} size an Integer > 0
-   */
-  pixel(size) {
-    this.pixelSize = size;
-    this.updateReader();
+  createReader() {
+    let input = document.createElement('img');
+    let canvas = document.createElement('canvas');
+    let context = canvas.getContext('2d');
+
+    input.crossOrigin = 'Anonymous';
+    input.onload = this.onLoad.bind(this);
+
+    return {
+      canvas,
+      context,
+      input
+    };
   }
 
-  /**
-   * public method for output type changes
-   * @param  {String} type one of:
-   *                       - canvas
-   *                       - svg
-   *                       - img
-   *                       - shadow
-   */
-  type(type) {
-    this.generateType = type;
-    this.updateReader();
+  updateReader(reader) {
+    let height = reader.input.height = reader.input.height / reader.input.width * this.options.row;
+    let width = reader.input.width = this.options.row;
+    objectAssign(this.options,{height,width});
+    objectAssign(reader.canvas,{height,width});
+
+    reader.context.drawImage(reader.input, 0, 0, width, height);
+    this.loadCallback(this);
   }
 
-  /**
-   * public method for scale changes
-   * will create more mosaic
-   * @param  {Integer} scale downscale width of the input
-   */
-  scale(scale) {
-    this.downScale = scale;
-    this.setSize();
-    this.updateReader();
-  }
-
-  /**
-   * public method for pixel shape changes
-   * @param  {String|undefined} shape either 'circle' or undefined|null|false
-   */
-  shape(shape) {
-    this.pixelShape = shape;
-    this.updateReader();
-  }
-
-  /**
-   * public method for resizing
-   * combines pixel and scale
-   * @param  {Integer} scale downscale width of the input
-   * @param  {Integer} pixel an Integer > 0
-   */
-  resize(scale, pixel) {
-    this.downScale = scale;
-    this.pixelSize = pixel;
-    this.setSize();
-    this.updateReader();
-  }
-
-  /**
-   * apply size to input
-   */
-  setSize() {
-    this.height = this.Input.height / this.Input.width * this.downScale;
-    this.width = this.downScale;
-    this.Input.height = this.height;
-    this.Input.width = this.width;
-  }
-
-
-  /**
-   * get the color Array and generate art
-   */
-  getColorArray() {
-    let data = [];
+  getColorArray(context) {
+    let imageData = context.getImageData(0,0,this.options.width,this.options.height);
     let colorArray = [];
 
-    // stop if no height is given
-    // better safe than sorry
-    if (this.Reader.height > 0) {
-      data = this.reader.getImageData(0, 0, this.width, this.height).data;
+    if (!imageData) {
+      return colorArray;
     }
 
+    let data = imageData.data;
     // simplify the array
     for (let i = 0; i < data.length; i += 4) {
       let r = data[i];
       let g = data[i + 1];
       let b = data[i + 2];
       let a = data[i + 3] / 255;
-      let rgba = [r, g, b, a].join(',');
+      let rgba = `rgba(${[r, g, b, a].join(',')})`;
 
       // make transparent pixels obvious for later filtering
       if (a === 0) {
         colorArray.push('transparent');
       } else {
-        colorArray.push(`rgba(${rgba})`);
+        colorArray.push(rgba);
       }
     }
-    this.colorArray = colorArray;
-    this.generateByType(this.generateType);
+    if (colorArray.length > this.options.width) {
+      this.colorArray = colorArray;
+    } else {
+      this.colorArray = false;
+    }
+    return colorArray;
+  }
+
+  drawShadow(reader) {
+    let shadow = [];
+    let y = 0;
+    let pixel = this.options.pixel;
+    let div = document.createElement('div');
+    let colorArray = this.colorArray || this.getColorArray(reader.context);
+
+    let margin = [
+      `${-1 * pixel}px`,
+      `${pixel * this.options.width}px`,
+      `${pixel * this.options.height}px`,
+      `${-1 * pixel}px`
+    ].join(' ');
+    let width = `${pixel}px`;
+    let height = width;
+
+    objectAssign(div.style, {
+      margin,
+      height,
+      width
+    })
+
+    if (this.options.shape === 'circle') {
+      div.style.borderRadius = '100%';
+    }
+
+    colorArray.forEach((color, index) => {
+      let width = this.options.width;
+      let x = (index % width + 1);
+
+      if (x === 1) {
+        ++y;
+      }
+
+      if (color !== 'transparent') {
+        shadow.push(`${x * pixel}px ${y * pixel}px 0 ${color}`)
+      }
+    });
+
+    div.style.boxShadow = shadow.join(',');
+
+    return div;
+  }
+
+  drawSVG(reader) {
+    let colorArray = this.colorArray || this.getColorArray(reader.context);
+    let y = -1;
+    let xmlns = 'http://www.w3.org/2000/svg';
+    let svg = document.createElementNS(xmlns, 'svg');
+    let height = this.options.height;
+    let width = this.options.width;
+    let pixel = this.options.pixel;
+    svg.setAttributeNS(null, 'viewBox', `0 0 ${[width, height].join(' ')}`);
+    svg.setAttributeNS(null, 'height', height * pixel);
+    svg.setAttributeNS(null, 'width', width * pixel);
+
+    colorArray.forEach((color, index) => {
+      let x = index % width;
+      if (x === 0) {
+        ++y;
+      }
+
+      // filter transparent pixels
+      if (color !== 'transparent') {
+
+        if (this.options.shape === 'circle') {
+          let circle = document.createElementNS(xmlns, 'circle');
+          circle.setAttributeNS(null, 'fill', color);
+          circle.setAttributeNS(null, 'cx', (x + .5));
+          circle.setAttributeNS(null, 'cy', (y + .5));
+          circle.setAttributeNS(null, 'r', .5);
+          svg.appendChild(circle);
+        } else {
+          let rect = document.createElementNS(xmlns, 'rect');
+          rect.setAttributeNS(null, 'fill', color);
+          rect.setAttributeNS(null, 'x', x);
+          rect.setAttributeNS(null, 'y', y);
+          rect.setAttributeNS(null, 'width', 1);
+          rect.setAttributeNS(null, 'height', 1);
+          svg.appendChild(rect);
+        }
+      }
+    });
+
+    return svg;
   }
 
   /**
    * draw the art on a canvas
    * @return {Node} returns a canvas with the pixelart version
    */
-  drawCanvas() {
-    let C = document.createElement('canvas');
-    let $ = C.getContext('2d');
-    let n = -1;
+  drawCanvas(reader) {
+    let canvas = document.createElement('canvas');
+    let context = canvas.getContext('2d');
+    let colorArray = this.colorArray || this.getColorArray(reader.context);
+    let y = -1;
+    let pixel = this.options.pixel;
 
-    C.height = this.height * this.pixelSize;
-    C.width = this.width * this.pixelSize;
+    canvas.height = this.options.height * pixel;
+    canvas.width = this.options.width * pixel;
 
-    for (let i = 0; i < this.colorArray.length; i++) {
-      $.fillStyle = this.colorArray[i];
-      let x = i % this.width;
+    colorArray.forEach((color, index) => {
+      let x = index % this.options.width;
 
       if (x === 0) {
-        ++n;
+        ++y;
       }
 
-      // filter transparent pixels
-      if (this.colorArray[i] !== 'transparent') {
-        let y = n;
-
-        if (this.pixelShape === 'circle') {
-          $.beginPath();
-          $.arc((x + .5) * this.pixelSize, (y + .5) * this.pixelSize, this.pixelSize / 2, 0, 2 * Math.PI);
-          $.closePath();
-          $.fill();
+      if (color !== 'transparent') {
+        context.fillStyle = color;
+        if (this.options.shape === 'circle') {
+          context.beginPath();
+          context.arc((x + .5) * pixel, (y + .5) * pixel, pixel / 2, 0, 2 * Math.PI);
+          context.closePath();
+          context.fill();
         } else {
-          $.fillRect(x * this.pixelSize, y * this.pixelSize, this.pixelSize, this.pixelSize);
+          context.fillRect(x * pixel, y * pixel, pixel, pixel);
         }
       }
-    }
-    return C;
+    });
+    return canvas;
+  }
+
+  getDataURL(canvas) {
+    return canvas.toDataURL('image/png');
+  }
+
+  drawIMG(dataURL) {
+    let img = document.createElement('img');
+    img.src = dataURL;
+    return img;
   }
 
   /**
-   * draw the art on an SVG
-   * @return {Node} returns an SVG with the pixelart version
+   * render the pixelart
    */
-  drawSVG() {
-    let n = -1;
-    let xmlns = 'http://www.w3.org/2000/svg';
-    let SVG = document.createElementNS(xmlns, 'svg');
-    SVG.setAttributeNS(null, 'viewBox', `0 0 ${[this.width, this.height].join(' ')}`);
-    SVG.setAttributeNS(null, 'height', this.height * this.pixelSize);
-    SVG.setAttributeNS(null, 'width', this.width * this.pixelSize);
-
-    for (let i = 0; i < this.colorArray.length; i++) {
-      let x = i % this.width;
-      if (x === 0) {
-        ++n;
-      }
-
-      // filter transparent pixels
-      if (this.colorArray[i] !== 'transparent') {
-        let y = n;
-
-        if (this.pixelShape === 'circle') {
-          let circle = document.createElementNS(xmlns, 'circle');
-          circle.setAttributeNS(null, 'fill', this.colorArray[i]);
-          circle.setAttributeNS(null, 'cx', (x + .5));
-          circle.setAttributeNS(null, 'cy', (y + .5));
-          circle.setAttributeNS(null, 'r', .5);
-          SVG.appendChild(circle);
-        } else {
-          let rect = document.createElementNS(xmlns, 'rect');
-          rect.setAttributeNS(null, 'fill', this.colorArray[i]);
-          rect.setAttributeNS(null, 'x', x);
-          rect.setAttributeNS(null, 'y', y);
-          rect.setAttributeNS(null, 'width', 1);
-          rect.setAttributeNS(null, 'height', 1);
-          SVG.appendChild(rect);
-        }
-      }
-    }
-
-    return SVG;
+  render(target) {
+    let drawing = this.draw(this.options.type);
+    target.innerHTML = '';
+    target.appendChild(drawing);
   }
 
-  /**
-   * draw the art with box-shadows
-   * @return {Node} returns a div with the pixelart version as shadows
-   */
-  drawShadow() {
-    let shadow = [];
-    let n = 0;
-    let S = document.createElement('div');
-
-    S.style.margin = `${-1 * this.pixelSize}px ${this.width * this.pixelSize}px ${this.height * this.pixelSize}px ${-1 * this.pixelSize}px`;
-    S.style.width = `${this.pixelSize}px`;
-    S.style.height = `${this.pixelSize}px`;
-
-    if (this.pixelShape === 'circle') {
-      S.style.borderRadius = '100%';
-    }
-
-    for (let i = 0; i < this.colorArray.length; i++) {
-      let x = (i % this.width + 1) * this.pixelSize;
-
-      if (i % this.width === 0) {
-        ++n;
-      }
-
-      if (this.colorArray[i] !== 'transparent') {
-        let y = n * this.pixelSize;
-        shadow.push(`${x}px ${y}px 0 ${this.colorArray[i]}`)
-      }
-    }
-
-    S.style.boxShadow = shadow.join(',').replace(/"/g, '');
-
-    return S;
-  }
-
-  /**
-   * uses drawCanvas to return a PNG
-   * @return {Node} image with a base encoded png
-   */
-  drawIMG() {
-    let C = this.drawCanvas();
-    let I = document.createElement('img');
-    let dataURL = C.toDataURL('image/png');
-    I.src = dataURL;
-
-    return I;
-  }
-
-  /**
-   * generate the output by type
-   * @param  {String} type one of:
-   *                       - canvas
-   *                       - svg
-   *                       - img
-   *                       - shadow
-   * @return {function}    return the type generator
-   */
-  generateByType(type) {
+  getType(type) {
+    let reader = this.reader;
     if (type === 'canvas') {
-      return this.drawCanvas();
+      return this.drawCanvas(reader);
     } else if (type === 'svg') {
-      return this.drawSVG();
+      return this.drawSVG(reader);
     } else if (type === 'img') {
-      return this.drawIMG();
-    } else if (type === 'shadow') {
-      return this.drawShadow();
+      let canvas = this.drawCanvas(reader);
+      let dataURL = this.getDataURL(canvas);
+      return this.drawIMG(dataURL);
+    } else if (type === 'boxShadow') {
+      return this.drawShadow(reader);
+    } else if (type === 'dataURL') {
+      let canvas = this.drawCanvas(reader);
+      return this.getDataURL(canvas);
+    } else if (type === 'colorArray') {
+      return (callback)=>{
+        if (typeof callback === 'function') {
+          let colors = this.getColorArray(reader.context);
+          callback(colors,this.options.row);
+        }
+      };
+    } else {
+      let message = `Error: ${type} is not a supported type`;
+      return {
+        message
+      };
     }
   }
+
 }
 
-if (typeof module !== 'undefined' && typeof module.default !== 'undefined') {
-  module.default = Pixel;
-} else {
-  window.Pixel = Pixel;
-}
-
+export default Pixel;
