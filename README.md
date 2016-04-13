@@ -18,7 +18,7 @@ var pixelass = new Pixel('ass.png');
 Examples:  
 [1. (v0.0.5)](http://codepen.io/pixelass/pen/JXpJZP)  
 [2. (v0.0.5)](http://codepen.io/pixelass/full/mPXrdM)  
-[3. (v0.1.0)](http://codepen.io/pixelass/full/KzogJj)  
+[3. (v0.2.0)](http://codepen.io/pixelass/full/KzogJj)  
 
 ## node & bower
 
@@ -84,17 +84,18 @@ supported types:
 
 
 
-Version 0.1.0 only comes with two methods
+Version 0.2.x comes with two methods
 
-`getType`: lazy method to generate when needed  
-`setOptions`: set Options after initializing
+`get`: lazy method to generate when needed  
+`set`: set Options after initializing
 
 
-Version 0.1.0 offers color modification
+Version 0.2.x offers color modification
 
 `hue`: only use this hue value  
 `hueRotate`: rotate hue
 `saturate`: saturate from -1 to 1
+`invert`: inverts the colors
 
 
 Due to performance concerns the new API does not render anything by itself

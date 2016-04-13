@@ -37,6 +37,7 @@ class Pixel {
         The provided type "${typeof options}"" is not supported
       `);
     }
+
     // bind the callback to this instance
     // and initialize
     this.loadCallback = loadCallback;
@@ -50,7 +51,7 @@ class Pixel {
    */
   onLoad(e) {
     this.updateReader(this.reader);
-    this.loadCallback(this);
+    this.loadCallback(this.set.bind(this),this.get.bind(this));
  }
 
   /**
@@ -98,13 +99,17 @@ class Pixel {
    * @param {Object} reader = {input,canvas,context}
    */
   updateReader(reader) {
-    let height = reader.input.height = reader.input.height / reader.input.width * this.options.row;
-    let width = reader.input.width = this.options.row;
+    let height = reader.input.height / reader.input.width * this.options.row;
+    let width = this.options.row;
     objectAssign(this.options, {
       height,
       width
     });
     objectAssign(reader.canvas, {
+      height,
+      width
+    });
+    objectAssign(reader.input, {
       height,
       width
     });
@@ -116,7 +121,7 @@ class Pixel {
    * set options after init
    * @param {Object} options new options
    */
-  setOptions(options) {
+  set(options) {
     objectAssign(this.options, options);
     this.updateReader(this.reader);
   }
@@ -148,10 +153,14 @@ class Pixel {
         colorArray.push('transparent');
       } else {
         let color = new Color(rgba);
+        let invert = this.options.invert;
         let hue = this.options.hue;
         let hueRotate = this.options.hueRotate;
         let sat = this.options.saturate;
         // handle color modification
+        if (invert === true) {
+          color = color.negate()
+        }
         if (typeof hue === 'number') {
           color = color.hue(hue);
         }
@@ -343,7 +352,7 @@ class Pixel {
    *                          row = number of pixels per row
    *                          in all other cases the unrendered element will be returned
    */
-  getType(type) {
+  get(type) {
     let reader = this.reader;
     if (type === 'canvas') {
       return this.drawCanvas(reader);

@@ -18,13 +18,12 @@
 
   new Pixel(3);
   
-  new Pixel('ass.png',function(instance){
-    var simple = instance.getType('canvas');
-    var svg = instance.getType('svg');
-    var img = instance.getType('img');
-    var boxShadow = instance.getType('boxShadow');
-    var colorArray = instance.getType('colorArray');
-    colorArray(function(colors,row){
+  new Pixel('ass.png',function(set,get){
+    var simple = get('canvas');
+    var svg = get('svg');
+    var img = get('img');
+    var boxShadow = get('boxShadow');
+    var colorArray = get('colorArray')(function(colors,row){
       console.log(colors,row);
     });
     document.getElementById('example_simple').appendChild(simple);
@@ -34,20 +33,24 @@
   });
 
 
+  var target = document.getElementById('example_options');
+
   new Pixel({
     src: 'bart.png',
-    pixel: 6,
-    row: 64,
-    shape: 'circle',
-    hueRotate: -50,
+    pixel: 20,
+    row: 32,
+    // hue: 50,
+    // invert: true,
+    hueRotate: 30,
     saturate: -.5
-  },function(instance){
-    instance.setOptions({
-      pixel: 20,
-      row: 16
+  },function(set,get){
+    set({
+      pixel: 5,
+      row: 64,
+      shape: 'circle'
     });
-    var output = instance.getType('img');
-    document.getElementById('example_options').appendChild(output);
+    var output = get('img');
+    target.appendChild(output);
   });
 
 </script>
