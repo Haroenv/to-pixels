@@ -16,9 +16,9 @@ var pixelass = new Pixel('ass.png');
 > Pixel is here to help
 
 Examples:  
-[1. (v0.0.5)](http://codepen.io/pixelass/pen/JXpJZP)  
+[1. (v0.0.5)](http://codepen.io/pixelass/full/JXpJZP)  
 [2. (v0.0.5)](http://codepen.io/pixelass/full/mPXrdM)  
-[3. (v0.2.0)](http://codepen.io/pixelass/full/KzogJj)  
+[3. (v0.2.0)](http://codepen.io/pixelass/full/dMmdbV)  
 
 ## npm & bower
 
